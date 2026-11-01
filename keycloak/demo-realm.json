@@ -1,0 +1,39 @@
+{
+  "realm": "demo",
+  "enabled": true,
+  "sslRequired": "none",
+  "accessTokenLifespan": 300,
+  "clients": [
+    {
+      "clientId": "demo-app",
+      "name": "Demo Shop",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "protocol": "openid-connect"
+    }
+  ],
+  "users": [
+    {
+      "username": "alice",
+      "enabled": true,
+      "email": "alice@example.test",
+      "emailVerified": true,
+      "firstName": "Alice",
+      "lastName": "Tester",
+      "requiredActions": [],
+      "credentials": [{ "type": "password", "value": "alice-pass", "temporary": false }]
+    },
+    {
+      "username": "bob",
+      "enabled": true,
+      "email": "bob@example.test",
+      "emailVerified": true,
+      "firstName": "Bob",
+      "lastName": "Tester",
+      "requiredActions": [],
+      "credentials": [{ "type": "password", "value": "bob-pass", "temporary": false }]
+    }
+  ]
+}

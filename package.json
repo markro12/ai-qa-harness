@@ -1,0 +1,38 @@
+{
+  "name": "ai-qa-harness",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AI-assisted QA harness demo: small services with token auth, Playwright TypeScript tests, CI regression.",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start:mock-idp": "tsx services/mock-idp/src/server.ts",
+    "start:payments": "tsx services/payments/src/server.ts",
+    "start:orders": "tsx services/orders/src/server.ts",
+    "start:web": "tsx services/web/src/server.ts",
+    "keycloak:up": "docker compose up -d keycloak",
+    "keycloak:down": "docker compose down",
+    "typecheck": "tsc --noEmit",
+    "test": "playwright test",
+    "test:api": "playwright test --project=api",
+    "test:ui": "playwright test --project=ui",
+    "test:mock": "cross-env IDP=mock playwright test",
+    "report": "playwright show-report"
+  },
+  "dependencies": {
+    "cookie-parser": "^1.4.7",
+    "express": "^5.1.0",
+    "jose": "^6.0.11"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0",
+    "@types/cookie-parser": "^1.4.8",
+    "@types/express": "^5.0.3",
+    "@types/node": "^22.15.0",
+    "cross-env": "^7.0.3",
+    "tsx": "^4.20.0",
+    "typescript": "^5.8.0"
+  }
+}

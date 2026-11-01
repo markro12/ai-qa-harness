@@ -3,6 +3,7 @@ import express from "express";
 import { randomUUID } from "node:crypto";
 import { requireAuth } from "../../shared/auth.js";
 import { config } from "../../shared/config.js";
+import { bug } from "../../shared/bugs.js";
 
 interface OrderLine {
   item: string;
@@ -17,6 +18,7 @@ interface Order extends OrderLine {
   status: "paid" | "payment_declined" | "payment_error";
   paymentId?: string;
   createdAt: string;
+  debug?: Record<string, unknown>;
 }
 
 const orders = new Map<string, Order>();
@@ -24,7 +26,11 @@ const orders = new Map<string, Order>();
 function validate(body: unknown): OrderLine | string {
   const b = (body ?? {}) as Record<string, unknown>;
   if (typeof b.item !== "string" || b.item.trim().length === 0) return "item_required";
-  if (!Number.isInteger(b.quantity) || (b.quantity as number) < 1) return "quantity_must_be_positive_integer";
+  if (bug("negative-quantity")) {
+    if (!Number.isInteger(b.quantity) || b.quantity === 0) return "quantity_must_be_positive_integer";
+  } else if (!Number.isInteger(b.quantity) || (b.quantity as number) < 1) {
+    return "quantity_must_be_positive_integer";
+  }
   if (typeof b.unitPrice !== "number" || !Number.isFinite(b.unitPrice) || b.unitPrice <= 0) {
     return "unitPrice_must_be_positive";
   }
@@ -47,7 +53,8 @@ app.get("/orders", requireAuth(), (req, res) => {
 
 app.get("/orders/:id", requireAuth(), (req, res) => {
   const order = orders.get(String(req.params.id));
-  if (!order || order.owner !== req.user!.sub) {
+  const ownerOk = bug("order-idor") || order?.owner === req.user!.sub;
+  if (!order || !ownerOk) {
     res.status(404).json({ error: "not_found" });
     return;
   }
@@ -74,16 +81,23 @@ app.post("/orders", requireAuth(), async (req, res) => {
   try {
     const payRes = await fetch(`${config.paymentsUrl}/payments`, {
       method: "POST",
-      headers: { "content-type": "application/json", authorization: `Bearer ${req.user!.token}` },
+      headers: {
+        "content-type": "application/json",
+        authorization: bug("token-forwarding") ? req.user!.token : `Bearer ${req.user!.token}`,
+      },
       body: JSON.stringify({ orderId: order.id, amount: order.total }),
     });
     if (payRes.ok) {
       const payment = (await payRes.json()) as { id: string; status: string };
       order.paymentId = payment.id;
-      order.status = payment.status === "approved" ? "paid" : "payment_declined";
+      order.status = bug("declined-as-paid") || payment.status === "approved" ? "paid" : "payment_declined";
     }
   } catch {
     order.status = "payment_error";
+  }
+
+  if (bug("token-in-response")) {
+    order.debug = { forwardedAuth: `Bearer ${req.user!.token}` };
   }
 
   orders.set(order.id, order);

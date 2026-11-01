@@ -2,7 +2,8 @@ import { defineConfig, devices } from "@playwright/test";
 
 // IDP=mock starts the mock identity provider. Otherwise the tests expect Keycloak on port 8080.
 const useMockIdp = process.env.IDP === "mock";
-const reuse = !process.env.CI;
+// The bug hunt restarts the services for each bug, so it never reuses running servers.
+const reuse = !process.env.CI && !process.env.BUG_HUNT;
 
 const service = (script: string, port: number) => ({
   command: `npm run ${script}`,

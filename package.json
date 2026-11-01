@@ -1,6 +1,6 @@
 {
   "name": "ai-qa-harness",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "AI-assisted QA harness demo: small services with token auth, Playwright TypeScript tests, CI regression.",
   "type": "module",
@@ -19,7 +19,8 @@
     "test:api": "playwright test --project=api",
     "test:ui": "playwright test --project=ui",
     "test:mock": "cross-env IDP=mock playwright test",
-    "report": "playwright show-report"
+    "report": "playwright show-report",
+    "bug-hunt": "tsx scripts/bug-hunt.ts"
   },
   "dependencies": {
     "cookie-parser": "^1.4.7",

@@ -1,0 +1,66 @@
+[
+  {
+    "id": "token-forwarding",
+    "title": "Orders forwards a broken token to payments",
+    "service": "orders",
+    "category": "auth",
+    "severity": "critical",
+    "description": "Orders drops the 'Bearer' scheme when it forwards the caller's token. Payments rejects every call, so no order can be paid."
+  },
+  {
+    "id": "declined-as-paid",
+    "title": "Declined payments show as paid",
+    "service": "orders",
+    "category": "business-logic",
+    "severity": "critical",
+    "description": "Orders marks an order as paid when payments returns any 201 response, even a declined payment."
+  },
+  {
+    "id": "limit-off-by-one",
+    "title": "Payment limit is off by one",
+    "service": "payments",
+    "category": "boundary",
+    "severity": "major",
+    "description": "Payments uses 'less than' instead of 'less than or equal to'. A payment of exactly $1,000 is declined."
+  },
+  {
+    "id": "order-idor",
+    "title": "Any user can read any order by ID",
+    "service": "orders",
+    "category": "access-control",
+    "severity": "critical",
+    "description": "GET /orders/:id does not check the owner. A signed-in user can read another user's order if they know its ID."
+  },
+  {
+    "id": "payment-idor",
+    "title": "Any user can read any payment by ID",
+    "service": "payments",
+    "category": "access-control",
+    "severity": "critical",
+    "description": "GET /payments/:id does not check the payer. A signed-in user can read another user's payment if they know its ID."
+  },
+  {
+    "id": "negative-quantity",
+    "title": "Orders accepts a negative quantity",
+    "service": "orders",
+    "category": "validation",
+    "severity": "major",
+    "description": "The quantity check rejects only zero. A negative quantity creates an order with a negative total."
+  },
+  {
+    "id": "token-in-response",
+    "title": "Order responses leak the user's access token",
+    "service": "orders",
+    "category": "data-exposure",
+    "severity": "critical",
+    "description": "A leftover debug field copies the caller's bearer token into every stored order. The API returns it in order responses."
+  },
+  {
+    "id": "stored-xss",
+    "title": "Item names are not escaped on the orders page",
+    "service": "web",
+    "category": "security",
+    "severity": "critical",
+    "description": "The web page writes the item name into the HTML without escaping. An item name with a script runs in the browser."
+  }
+]

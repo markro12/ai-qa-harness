@@ -3,6 +3,7 @@ import express, { type Request, type Response } from "express";
 import cookieParser from "cookie-parser";
 import { randomUUID } from "node:crypto";
 import { config } from "../../shared/config.js";
+import { bug } from "../../shared/bugs.js";
 
 interface Session {
   token: string;
@@ -130,7 +131,7 @@ app.get("/orders", async (req, res) => {
   const rows = orders
     .map(
       (o) => `<tr data-order-id="${esc(o.id)}">
-  <td>${esc(o.item)}</td><td>${esc(o.quantity)}</td><td>$${o.total.toFixed(2)}</td>
+  <td>${bug("stored-xss") ? o.item : esc(o.item)}</td><td>${esc(o.quantity)}</td><td>$${o.total.toFixed(2)}</td>
   <td class="status-${esc(o.status)}">${esc(o.status.replace("_", " "))}</td>
 </tr>`,
     )

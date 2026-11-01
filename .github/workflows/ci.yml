@@ -72,3 +72,35 @@ jobs:
             playwright-report/
             test-results/
           retention-days: 14
+
+  bug-hunt:
+    name: Bug hunt
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      # Turns on one planted bug at a time and runs the suite.
+      # The job fails only if the suite fails with no bugs. Missed bugs show in the job summary.
+      - name: Run bug hunt
+        run: npm run bug-hunt
+
+      - name: Upload bug hunt report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bug-hunt-report
+          path: reports/
+          retention-days: 30

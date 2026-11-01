@@ -3,6 +3,7 @@ import express from "express";
 import { randomUUID } from "node:crypto";
 import { requireAuth } from "../../shared/auth.js";
 import { config } from "../../shared/config.js";
+import { bug } from "../../shared/bugs.js";
 
 interface Payment {
   id: string;
@@ -34,7 +35,7 @@ app.post("/payments", requireAuth(), (req, res) => {
     return;
   }
 
-  const approved = amount <= config.paymentLimit;
+  const approved = bug("limit-off-by-one") ? amount < config.paymentLimit : amount <= config.paymentLimit;
   const payment: Payment = {
     id: randomUUID(),
     orderId,
@@ -50,7 +51,8 @@ app.post("/payments", requireAuth(), (req, res) => {
 
 app.get("/payments/:id", requireAuth(), (req, res) => {
   const payment = payments.get(String(req.params.id));
-  if (!payment || payment.payer !== req.user!.sub) {
+  const payerOk = bug("payment-idor") || payment?.payer === req.user!.sub;
+  if (!payment || !payerOk) {
     res.status(404).json({ error: "not_found" });
     return;
   }

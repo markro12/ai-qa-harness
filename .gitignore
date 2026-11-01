@@ -4,3 +4,4 @@ test-results/
 blob-report/
 .env
 *.log
+reports/

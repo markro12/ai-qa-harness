@@ -5,7 +5,7 @@ An AI-assisted QA harness, built in public.
 This project shows how to use Claude to write Playwright tests. It also shows how to prove that those tests are good.
 The project tests a small demo shop. The shop has two services and a web page. Keycloak controls sign-in.
 
-> **Status:** Stage 1 of 6. The demo system, the hand-written tests and CI are in place. The AI parts come next. See [Roadmap](#roadmap).
+> **Status:** Stage 2 of 6. The demo system, hand-written tests, planted bugs, the bug hunt and CI are in place. The AI parts come next. See [Roadmap](#roadmap).
 
 ## Architecture
 
@@ -104,6 +104,50 @@ npm run test:ui      # UI tests only
 npx playwright test --ui   # step through tests in Playwright's UI mode
 ```
 
+## Planted bugs and the bug hunt
+
+A passing suite does not prove that the tests are good. A good suite must also fail when the code is wrong.
+This project plants 8 realistic bugs in the shop. Each bug has a switch. All switches are off by default.
+
+[`bugs/catalog.json`](bugs/catalog.json) lists the bugs. The categories are auth, access control, data exposure, security, validation, boundary and business logic.
+
+The bug hunt measures how many bugs the suite catches:
+
+1. Run the suite with no bugs. Every test must pass.
+2. Turn on one bug and run the suite again.
+3. If at least one test fails, the suite caught that bug.
+4. Repeat for each bug.
+
+```bash
+npm run bug-hunt                  # uses the mock identity provider
+IDP=keycloak npm run bug-hunt     # uses Keycloak on :8080
+```
+
+The hunt writes `reports/bug-hunt.json` and `reports/bug-hunt.md`.
+
+To run the shop with a bug turned on, set `PLANTED_BUGS` before you start the services:
+
+```bash
+PLANTED_BUGS=stored-xss npm run start:web
+```
+
+### Baseline result: hand-written suite
+
+| Bug | Category | Severity | Caught |
+| --- | --- | --- | --- |
+| `token-forwarding` Orders forwards a broken token to payments | auth | critical | ✅ |
+| `declined-as-paid` Declined payments show as paid | business logic | critical | ✅ |
+| `limit-off-by-one` Payment limit is off by one | boundary | major | ✅ |
+| `order-idor` Any user can read any order by ID | access control | critical | ✅ |
+| `payment-idor` Any user can read any payment by ID | access control | critical | ✅ |
+| `negative-quantity` Orders accepts a negative quantity | validation | major | ❌ |
+| `token-in-response` Order responses leak the user's access token | data exposure | critical | ❌ |
+| `stored-xss` Item names are not escaped on the orders page | security | critical | ❌ |
+
+**The hand-written suite catches 5 of 8 bugs (62.5%).**
+The 3 missed bugs are deliberate. Stage 3 checks whether AI-written tests find them.
+The AI test writer never sees `bugs/catalog.json`. It gets only the user stories and the API spec.
+
 ## CI
 
 GitHub Actions runs [`.github/workflows/ci.yml`](.github/workflows/ci.yml):
@@ -114,13 +158,16 @@ GitHub Actions runs [`.github/workflows/ci.yml`](.github/workflows/ci.yml):
 
 Each run tests against real Keycloak and against the mock. Each run uploads the HTML report as an artifact.
 
+After the tests pass, the **Bug hunt** job runs. It shows the catch rate in the job summary and uploads the report.
+The job fails only if the suite fails with no bugs.
+
 ## Roadmap
 
 | Stage | Work | Status |
 | --- | --- | --- |
 | 1 | Demo services, Keycloak, Playwright project, CI | ✅ Done |
-| 2 | Planted bugs, so the harness has real defects to find | Next |
-| 3 | Claude writes tests from user stories and API specs. A mutation check proves each test can fail. | Planned |
+| 2 | Planted bugs and the bug hunt, so the harness has real defects to find | ✅ Done |
+| 3 | Claude writes tests from user stories and API specs. A mutation check proves each test can fail. | Next |
 | 4 | Pact contract tests between orders and payments. BDD features in Gherkin. | Planned |
 | 5 | Results page on GitHub Pages: tests generated, review pass rate, mutation kill rate, bugs found | Planned |
 | 6 | Write-up: how to trust tests that AI writes | Planned |
